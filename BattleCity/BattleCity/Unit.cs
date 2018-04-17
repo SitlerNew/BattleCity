@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
+using System.Threading;
 
 namespace BattleCity
 {
+    
     class Unit
     {
         private float x;
@@ -22,8 +24,9 @@ namespace BattleCity
         private Image image;
         private Texture texture;
         public Sprite sprite;
+        private Debug console;
 
-        public Unit(string name, float x, float y, float s = 10)
+        public Unit(string name, float x, float y, float s = 0.1f)
         {
             dx = 0;
             dy = 0;
@@ -40,9 +43,10 @@ namespace BattleCity
             this.y = y;
 
             sprite.TextureRect = new IntRect(0, 0, 32, 32);
+            console = new Debug();
         }
 
-        public void update(float time, int[,] tileMap)
+        public void update(float time, int[,] tileMap, ref RenderWindow a, ref FieldMap h)
         {
             switch (dir)
             {
@@ -53,6 +57,7 @@ namespace BattleCity
                 case 1:
                     dx = -speed;
                     dy = 0;
+                    
                     break;
                 case 2:
                     dx = 0;
@@ -71,36 +76,104 @@ namespace BattleCity
 
             speed = 0;
 
-            sprite.Position = new Vector2f(x, y);
-            interactionWithMap(tileMap);
+            if (dir == 0 || dir == 1)
+                MultiplePos();
+
+
+            console.DConsole("X " + x + "\n Y " + y);
+            console.Print();
+
+
+            sprite.Position = new Vector2f (x,y);
+            interactionWithMap(tileMap, ref a, ref h);
         }
 
-        public void interactionWithMap(int[,] tileMap)
+        public void MultiplePos()
+        {
+            int tmp = 32;
+
+            int tmpX = (int)x;
+            int tmpY = (int)y;
+
+            x = tmpX;
+            y = tmpY;
+
+
+            if (dir == 2)
+            {
+                var result = y % tmp;
+                if (result < 0)
+                    result += tmp;
+
+                y += result;
+            }
+
+            if (dir == 3)
+            {
+                var result = y % tmp;
+                if (result < 0)
+                    result += tmp;
+
+                y -= result;
+            }
+
+            if (dir == 0)
+            {
+                var result = x % tmp;
+                if (result < 0)
+                    result += tmp;
+
+                x += result;
+            }
+
+            if (dir == 1)
+            {
+                var result = x % tmp;
+                if (result < 0)
+                    result += tmp;
+
+                x -= result;
+            }
+        }
+
+        public void interactionWithMap(int[,] tileMap, ref RenderWindow window, ref FieldMap map)
         {
             for (int i = (int)y / 32; i < (y + height) / 32; i++)
                 for (int j = (int)x / 32; j < (x + width) / 32; j++)
                 {
-                    if (tileMap[i, j] == 1)
+                    if (tileMap[i, j] == 1 || tileMap[i, j] == 3)
                     {
                         if (dy > 0)
                         {
                             y = i * 32 - height;
+                            sprite.Position = new Vector2f(x, y);
                         }
                         if (dy < 0)
                         {
                             y = i * 32 + 32;
+                            sprite.Position = new Vector2f(x, y);
                         }
                         if (dx > 0)
                         {
                             x = j * 32 - width;
+                            sprite.Position = new Vector2f(x, y);
                         }
                         if (dx < 0)
                         {
                             x = j * 32 + 32;
+                            sprite.Position = new Vector2f(x, y);
                         }
+                    }
+
+                    if (tileMap[i, j] == 2)
+                    {
+                        sprite.Position = new Vector2f(x, y);
+                        map.Draw(ref window);
+                        window.Display();
+
+                        window.Draw(sprite);
                     }
                 }
         }
-
     }
 }
