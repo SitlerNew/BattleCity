@@ -28,7 +28,8 @@ namespace BattleCity
 
 
             FieldMap map = new FieldMap("map.png");
-            Unit p = new Unit("players1.png", 300, 700, 0.1f);
+            Player1 player1 = new Player1("players1.png","Vitaliy",true,Color.Green, 300, 700);
+            Player2 player2 = new Player2("players1.png", "Davidiy", true, new Color(255,0,0), 250, 700);
 
             Clock clock = new Clock();
 
@@ -40,45 +41,16 @@ namespace BattleCity
                 clock.Restart();
                 time = time / 800;
 
-                if (Keyboard.IsKeyPressed(Keyboard.Key.Up))
-                {
-                    p.dir = 3;
-                    p.speed = 0.07f;
-                   // p.MultiplePos();
-                    p.sprite.TextureRect = new IntRect(0, 0, 32, 32);
-                }
 
-                if (Keyboard.IsKeyPressed(Keyboard.Key.Down))
-                {
-                    p.dir = 2;
-                    p.speed = 0.1f;
-                   // p.MultiplePos();
-                    p.sprite.TextureRect = new IntRect(32, 0, 32, 32);
-                }
+                player1.move(time, map.tileMap, ref window, ref map);
+                player2.move(time, map.tileMap, ref window, ref map);
 
-                if (Keyboard.IsKeyPressed(Keyboard.Key.Right))
-                {
-                    p.dir = 0;
-                    p.speed = 0.1f;
-
-                    p.sprite.TextureRect = new IntRect(96, 0, 32, 32);
-                }
-
-                if (Keyboard.IsKeyPressed(Keyboard.Key.Left))
-                {
-                    p.dir = 1;
-                    p.speed = 0.07f;
-
-                    p.sprite.TextureRect = new IntRect(64, 0, 32, 32);
-                }
-
-                p.update(time, map.tileMap, ref window, ref map);
-                
                 //window.Clear(Color.Black);
                 //------------------------------------------------Draw Code------------------------------------------------//
 
                 map.Draw(ref window);
-                window.Draw(p.sprite);
+                window.Draw(player1.Sprite);
+                window.Draw(player2.Sprite);
 
 
                 //------------------------------------------------Show Code------------------------------------------------//
