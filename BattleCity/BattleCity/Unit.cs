@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,6 +31,7 @@ namespace BattleCity
         protected SoundBuffer buffer;
         protected Sound sound;
         public Bullet bullet;
+        private State stateMemento;
         public bool isShoot;
         
         protected enum state{ right, left, down, up};
@@ -83,9 +85,9 @@ namespace BattleCity
 
 
         //Основыне методы
-        public virtual void update(float time, int[,] tileMap, ref RenderWindow a, ref FieldMap h, Player1 ob1, Player2 ob2)
+        public virtual void update(float time, int[,] tileMap, ref RenderWindow a, ref FieldMap h, Player1 ob1, Player2 ob2, GameHistory history)
         {
-            Control();
+            Control(history);
 
             switch (dir)
             {
@@ -229,7 +231,7 @@ namespace BattleCity
             }
         }
 
-        public virtual void Control()
+        public virtual void Control(GameHistory history)
         {
             if (Keyboard.IsKeyPressed(Keyboard.Key.Up))
             {
@@ -263,10 +265,64 @@ namespace BattleCity
             {
                 if (isShoot == false)
                 {
-                    bullet = new Bullet("bullet.png", Color.Green,x,y,0.1F,dir);
+                    bullet = new Bullet("bullet.png", Color.Green,x,y,0.4F,dir);
                     isShoot = true;
                 }
             }
+
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Num1))
+            {
+                history.AddHistory(MementoSave());
+            }
+
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Num2))
+            {
+                MementoLoad(history.GetHistory());
+            }
+        }
+
+
+
+        public Memento MementoSave()
+        {
+            stateMemento = new State();
+            stateMemento.currentSpeed = currentSpeed;
+            stateMemento.dir = dir;
+            stateMemento.dx = dx;
+            stateMemento.dy = dy;
+            stateMemento.height = height;
+            stateMemento.isShoot = isShoot;
+            stateMemento.width = width;
+            stateMemento.x = x;
+            stateMemento.y = y;
+
+            FileStream file1 = new FileStream("..\\state.txt", FileMode.Create);
+            StreamWriter writer = new StreamWriter(file1);
+            writer.Write(currentSpeed.ToString() + "\n");
+            writer.Write(dir.ToString() + "\n");
+            writer.Write(dx.ToString() + "\n");
+            writer.Write(dy.ToString() + "\n");
+            writer.Write(height.ToString() + "\n");
+            writer.Write(width.ToString() + "\n");
+            writer.Write(isShoot.ToString() + "\n");
+            writer.Write(x.ToString() + "\n");
+            writer.Write(y.ToString() + "\n");
+            writer.Close();
+
+            return new Memento(stateMemento);
+        }
+
+        public void MementoLoad(Memento memento)
+        {
+            currentSpeed = memento.state.currentSpeed;
+            dir = memento.state.dir;
+            dx = memento.state.dx;
+            dy = memento.state.dy;
+            height = memento.state.height;
+            isShoot = memento.state.isShoot;
+            width = memento.state.width;
+            x = memento.state.x;
+            y = memento.state.y;
         }
 
 
@@ -333,7 +389,7 @@ namespace BattleCity
 
         }
 
-        public override void Control()
+        public override void Control(GameHistory history)
         {
             if (Keyboard.IsKeyPressed(Keyboard.Key.W))
             {
@@ -364,9 +420,9 @@ namespace BattleCity
             }
         }
 
-        public override void update(float time, int[,] tileMap, ref RenderWindow a, ref FieldMap h, Player1 ob1, Player2 ob2)
+        public override void update(float time, int[,] tileMap, ref RenderWindow a, ref FieldMap h, Player1 ob1, Player2 ob2, GameHistory history)
         {
-            Control();
+            Control(history);
 
             switch (dir)
             {

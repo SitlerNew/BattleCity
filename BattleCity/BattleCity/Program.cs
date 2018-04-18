@@ -36,14 +36,16 @@ namespace BattleCity
             Thread musicThread = new Thread(new ThreadStart(SwitchMusic));
             musicThread.Start();
 
+            GameHistory history = new GameHistory();
+
 
             //------------------------------------------------Game Code------------------------------------------------//    
 
             FieldMap map = new FieldMap("map.png");
 
-            Player1 player1 = new Player1("players1.png", "Vitaliy", true, Color.Green, 250, 500);
+            Player1 player1 = new Player1("players1.png", "Vitaliy", true, Color.Green, 544, 732);
 
-            Player2 player2 = new Player2("players1.png", "Davidiy", true, Color.Red, 350, 500);
+            Player2 player2 = new Player2("players1.png", "Davidiy", true, Color.Red, 672, 38);
 
             Clock clock = new Clock();
 
@@ -58,8 +60,8 @@ namespace BattleCity
                 time = time / 800;
 
 
-                player1.update(time, map.tileMap, ref window, ref map, player1, player2);
-                player2.update(time, map.tileMap, ref window, ref map, player1, player2);
+                player1.update(time, map.tileMap, ref window, ref map, player1, player2, history);
+                player2.update(time, map.tileMap, ref window, ref map, player1, player2, history);
                 if(player1.isShoot)
                     player1.bullet.update(time, map.tileMap, ref window, player1, player2);
 
