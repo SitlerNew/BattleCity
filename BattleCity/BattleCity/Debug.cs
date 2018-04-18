@@ -15,6 +15,7 @@ namespace BattleCity
         static RenderWindow window;
         public Text console;
         private List<Text> arrTexts;
+        float y = 10;
 
         public Debug()
         {
@@ -51,9 +52,18 @@ namespace BattleCity
             arrTexts.Add(console);
         }
 
-        public void DConsole(string a)
+
+        public void FConsole(string a)
         {
             console.DisplayedString = a;
+            console.Position = new Vector2f(0, 10);
+            arrTexts.Add(console);
+        }
+
+        public void SConsole(string a)
+        {
+            console.DisplayedString = a;
+            console.Position = new Vector2f(0,40);
             arrTexts.Add(console);
         }
 

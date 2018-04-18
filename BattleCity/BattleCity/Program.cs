@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,12 +8,19 @@ using System.Threading;
 using SFML.Graphics;
 using SFML.Window;
 using SFML.System;
+using SFML.Audio;
+using IWshRuntimeLibrary;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace BattleCity
 {
     class Program
     {
         static RenderWindow window;
+        static Music[] musicThemes;
+        
+
         static void Main(string[] args)
         {
             //------------------------------------------------Bound Code------------------------------------------------//
@@ -20,20 +28,28 @@ namespace BattleCity
             window.SetVerticalSyncEnabled(true);
             window.Closed += WinClosed;
 
-            Image icon = new Image("..\\Source\\Textures\\icon5.png");
+            Image icon = new Image("..\\Source\\Textures\\panzer.png");
             window.SetIcon(64, 64, icon.Pixels);
+
+            musicThemes = new [] { new Music("..\\Source\\Sounds\\theme1.ogg"), new Music("..\\Source\\Sounds\\theme2.ogg") };
+
+            Thread musicThread = new Thread(new ThreadStart(SwitchMusic));
+            musicThread.Start();
+
 
             //------------------------------------------------Game Code------------------------------------------------//    
 
-
-
             FieldMap map = new FieldMap("map.png");
-            Player1 player1 = new Player1("players1.png","Vitaliy",true,Color.Green, 300, 700);
-            Player2 player2 = new Player2("players1.png", "Davidiy", true, new Color(255,0,0), 250, 700);
+
+            Player1 player1 = new Player1("players1.png", "Vitaliy", true, Color.Green, 250, 500);
+
+            Player2 player2 = new Player2("players1.png", "Davidiy", true, Color.Red, 350, 500);
 
             Clock clock = new Clock();
 
-            
+            Debug f = new Debug();
+
+
             while (window.IsOpen)
             {
                 window.DispatchEvents();
@@ -42,8 +58,11 @@ namespace BattleCity
                 time = time / 800;
 
 
-                player1.move(time, map.tileMap, ref window, ref map);
-                player2.move(time, map.tileMap, ref window, ref map);
+                player1.update(time, map.tileMap, ref window, ref map, player1, player2);
+                player2.update(time, map.tileMap, ref window, ref map, player1, player2);
+
+                f.FConsole("P1 \n X - " + player1.X + " Y - " + player1.Y + "\n\nP2 \n X - " + player2.X + " Y - " + player2.Y);
+
 
                 //window.Clear(Color.Black);
                 //------------------------------------------------Draw Code------------------------------------------------//
@@ -51,11 +70,20 @@ namespace BattleCity
                 map.Draw(ref window);
                 window.Draw(player1.Sprite);
                 window.Draw(player2.Sprite);
-
+                f.Print();
 
                 //------------------------------------------------Show Code------------------------------------------------//
                 window.Display();
             }
+
+        }
+
+        
+
+        public static void SwitchMusic()
+        {
+            musicThemes[1].Play();
+            musicThemes[1].Loop = true;
         }
 
         public static void WinClosed(object sender, EventArgs e)
@@ -63,4 +91,5 @@ namespace BattleCity
             window.Close();
         }
     }
+
 }

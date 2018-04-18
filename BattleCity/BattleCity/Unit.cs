@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
+using SFML.Audio;
 using System.Threading;
 
 namespace BattleCity
@@ -24,7 +25,8 @@ namespace BattleCity
         protected Image image;
         protected Texture texture;
         protected Sprite sprite;
-       // protected Debug console;
+        protected SoundBuffer buffer;
+        protected Sound sound;
 
         public Unit(string fileName, float x, float y)
         {
@@ -32,8 +34,8 @@ namespace BattleCity
             dy = 0;
             speed = 0;
             dir = 0;
-            width = 32;
-            height = 32;
+            width = 30;
+            height = 30;
 
             image = new Image("..\\Source\\Textures\\" + fileName);
             texture = new Texture(image);
@@ -43,17 +45,22 @@ namespace BattleCity
             this.y = y;
 
             sprite.TextureRect = new IntRect(0, 0, 32, 32);
-            //console = new Debug();
+            buffer = new SoundBuffer("..\\Source\\Sounds\\00194.ogg");
+            sound = new Sound(buffer);
         }
 
-        public virtual void move(float time, int[,] tileMap, ref RenderWindow a, ref FieldMap h)
+        public virtual void move()
+        {
+
+        }
+
+        public virtual void update(float time, int[,] tileMap, ref RenderWindow a, ref FieldMap h, Player1 ob1, Player2 ob2)
         {
 
             if (Keyboard.IsKeyPressed(Keyboard.Key.Up))
             {
                 dir = 3;
                 speed = 0.07f;
-                   //p.MultiplePos();
                 sprite.TextureRect = new IntRect(0, 0, 32, 32);
             }
 
@@ -61,7 +68,6 @@ namespace BattleCity
             {
                 dir = 2;
                 speed = 0.1f;
-                  //p.MultiplePos();
                 sprite.TextureRect = new IntRect(32, 0, 32, 32);
             }
 
@@ -90,7 +96,6 @@ namespace BattleCity
                 case 1:
                     dx = -speed;
                     dy = 0;
-                    
                     break;
                 case 2:
                     dx = 0;
@@ -112,15 +117,27 @@ namespace BattleCity
 
             MultiplePos();
 
-            //console.DConsole("X " + x + "\n Y " + y);
-            //console.Print();
-
 
             sprite.Position = new Vector2f (x,y);
-            interactionWithMap(tileMap, ref a, ref h);
+
+            if(CollisiumWihtPlayer(ob1, ob2))
+            {
+                if(dir == 1)
+                    sprite.Position = new Vector2f(x += 2, y);
+                else if(dir == 0)
+                    sprite.Position = new Vector2f(x -= 2, y);
+
+                if (dir == 3)
+                    sprite.Position = new Vector2f(x , y += 2);
+                else if (dir == 2)
+                    sprite.Position = new Vector2f(x , y -= 2);
+
+            }
+
+            //interactionWithMap(tileMap, ref a, ref h);
         }
 
-        public void interactionWithMap(int[,] tileMap, ref RenderWindow window, ref FieldMap map)
+        public virtual void interactionWithMap(int[,] tileMap, ref RenderWindow window, ref FieldMap map)
         {
             for (int i = (int)y / 32; i < (y + height) / 32; i++)
                 for (int j = (int)x / 32; j < (x + width) / 32; j++)
@@ -149,13 +166,20 @@ namespace BattleCity
                         }
                     }
 
+                    if (tileMap[i, j] == 0)
+                    {
+                        sprite.Color = new Color(0, 255, 0);
+                    }
+
                     if (tileMap[i, j] == 2)
                     {
-                        sprite.Position = new Vector2f(x, y);
-                        map.Draw(ref window);
-                        window.Display();
+                        sprite.Color = new Color(0, 255, 0, 5);
 
-                        window.Draw(sprite);
+                        //sprite.Position = new Vector2f(x, y);
+                        //map.Draw(ref window);
+                        //window.Display();
+
+                        //window.Draw(sprite);
                     }
                 }
         }
@@ -171,7 +195,7 @@ namespace BattleCity
             y = tmpY;
 
 
-            if (dir == 2)
+            if (dir == 1)
             {
                 var result = y % tmp;
                 if (result < 0)
@@ -180,7 +204,7 @@ namespace BattleCity
                 y += result;
             }
 
-            if (dir == 3)
+            if (dir == 0)
             {
                 var result = y % tmp;
                 if (result < 0)
@@ -189,7 +213,7 @@ namespace BattleCity
                 y -= result;
             }
 
-            if (dir == 0)
+            if (dir == 2)
             {
                 var result = x % tmp;
                 if (result < 0)
@@ -198,7 +222,7 @@ namespace BattleCity
                 x += result;
             }
 
-            if (dir == 1)
+            if (dir == 3)
             {
                 var result = x % tmp;
                 if (result < 0)
@@ -214,6 +238,30 @@ namespace BattleCity
 
             protected set { }
         }
+
+        public bool CollisiumWihtPlayer(Player1 ob1, Player2 ob2)
+        {
+            if ((ob1.X >= ob2.X - 30 && ob1.X <= ob2.X + 30) && (ob1.Y >= ob2.Y - 30 && ob1.Y <= ob2.Y + 30))//) //|| /*((ob1.Y + 30 >= ob2.Y && ob1.Y <= ob2.Y + 30) && (ob1.Y - 30 <= ob2.Y && ob1.Y <= ob2.Y + 30*/)
+                return true;
+            else if (ob2.X >= ob1.X - 30 && ob2.X <= ob1.X + 30)
+                return true;
+
+            return false;
+        }
+
+        public int X
+        {
+            get { return (int)x; }
+
+            protected set { x = value; }
+        }
+
+        public int Y
+        {
+            get { return (int)y; }
+
+            protected set { y = value; }
+        }
     }
 
     class Player1 : Unit
@@ -223,6 +271,7 @@ namespace BattleCity
         private Color color;
         private int healt;
         private string name;
+
 
         public Player1(string fileName, string playerName, bool isAlly, Color color, float x, float y) : base(fileName,x,y)
         {
@@ -234,9 +283,7 @@ namespace BattleCity
 
             sprite.Color = color;
         }
-
-        
-
+            
     }
 
     class Player2 : Unit
@@ -256,15 +303,15 @@ namespace BattleCity
             name = playerName;
 
             sprite.Color = color;
+
         }
 
-        public override void move(float time, int[,] tileMap, ref RenderWindow a, ref FieldMap h)
+        public override void update(float time, int[,] tileMap, ref RenderWindow a, ref FieldMap h, Player1 ob1, Player2 ob2)
         {
             if (Keyboard.IsKeyPressed(Keyboard.Key.W))
             {
                 dir = 3;
                 speed = 0.07f;
-                //p.MultiplePos();
                 sprite.TextureRect = new IntRect(0, 0, 32, 32);
             }
 
@@ -272,7 +319,6 @@ namespace BattleCity
             {
                 dir = 2;
                 speed = 0.1f;
-                //p.MultiplePos();
                 sprite.TextureRect = new IntRect(32, 0, 32, 32);
             }
 
@@ -323,13 +369,56 @@ namespace BattleCity
 
             MultiplePos();
 
-            //console.DConsole("X " + x + "\n Y " + y);
-            //console.Print();
-
 
             sprite.Position = new Vector2f(x, y);
             interactionWithMap(tileMap, ref a, ref h);
+        }
 
+        public override void interactionWithMap(int[,] tileMap, ref RenderWindow window, ref FieldMap map)
+        {
+            for (int i = (int)y / 32; i < (y + height) / 32; i++)
+                for (int j = (int)x / 32; j < (x + width) / 32; j++)
+                {
+                    if (tileMap[i, j] == 1 || tileMap[i, j] == 3)
+                    {
+                        if (dy > 0)
+                        {
+                            y = i * 32 - height;
+                            sprite.Position = new Vector2f(x, y);
+                        }
+                        if (dy < 0)
+                        {
+                            y = i * 32 + 32;
+                            sprite.Position = new Vector2f(x, y);
+                        }
+                        if (dx > 0)
+                        {
+                            x = j * 32 - width;
+                            sprite.Position = new Vector2f(x, y);
+                        }
+                        if (dx < 0)
+                        {
+                            x = j * 32 + 32;
+                            sprite.Position = new Vector2f(x, y);
+                        }
+                    }
+
+                    if(tileMap[i, j] == 0)
+                    {
+                        sprite.Color = new Color(255, 0, 0);
+                    }
+
+                    if (tileMap[i, j] == 2)
+                    {
+                        sprite.Color = new Color(0,255, 0,5);
+
+                        //map.Draw(ref window);
+                        //window.Draw(sprite);
+                        //window.Display();
+
+                    }
+                }
+            
         }
     }
 
