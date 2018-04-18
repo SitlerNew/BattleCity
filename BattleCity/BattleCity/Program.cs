@@ -60,6 +60,8 @@ namespace BattleCity
 
                 player1.update(time, map.tileMap, ref window, ref map, player1, player2);
                 player2.update(time, map.tileMap, ref window, ref map, player1, player2);
+                if(player1.isShoot)
+                    player1.bullet.update(time, map.tileMap, ref window, player1, player2);
 
                 f.FConsole("P1 \n X - " + player1.X + " Y - " + player1.Y + "\n\nP2 \n X - " + player2.X + " Y - " + player2.Y);
 
@@ -70,6 +72,8 @@ namespace BattleCity
                 map.Draw(ref window);
                 window.Draw(player1.Sprite);
                 window.Draw(player2.Sprite);
+                if (player1.isShoot)
+                    window.Draw(player1.bullet.Sprite);
                 f.Print();
 
                 //------------------------------------------------Show Code------------------------------------------------//

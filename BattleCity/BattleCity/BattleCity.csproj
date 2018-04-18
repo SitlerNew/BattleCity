@@ -63,6 +63,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Bullet.cs" />
     <Compile Include="Debug.cs" />
     <Compile Include="FieldMap.cs" />
     <Compile Include="Program.cs" />

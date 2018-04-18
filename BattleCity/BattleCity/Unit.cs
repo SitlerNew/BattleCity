@@ -19,7 +19,9 @@ namespace BattleCity
         protected float dy;
         protected float width;
         protected float height;
-        protected float speed;
+        protected float currentSpeed;
+        protected const float speedForward = 0.1F;
+        protected const float speedBackward = 0.07F;
         protected bool isLife;
         protected int dir;
         protected Image image;
@@ -27,15 +29,23 @@ namespace BattleCity
         protected Sprite sprite;
         protected SoundBuffer buffer;
         protected Sound sound;
+        public Bullet bullet;
+        public bool isShoot;
+        
+        protected enum state{ right, left, down, up};
 
+
+        //Конструкторы
         public Unit(string fileName, float x, float y)
         {
             dx = 0;
             dy = 0;
-            speed = 0;
             dir = 0;
+            currentSpeed = 0;
             width = 30;
             height = 30;
+
+            isLife = true;
 
             image = new Image("..\\Source\\Textures\\" + fileName);
             texture = new Texture(image);
@@ -49,61 +59,51 @@ namespace BattleCity
             sound = new Sound(buffer);
         }
 
-        public virtual void move()
+        public Unit(string fileName, float x, float y, float speed, int dir)
         {
+            dx = 0;
+            dy = 0;
+            this.dir = dir;
+            width = 16;
+            height = 16;
+            currentSpeed = speed;
+            isShoot = false;
 
+            isLife = true;
+
+            image = new Image("..\\Source\\Textures\\" + fileName);
+            texture = new Texture(image);
+            sprite = new Sprite(texture);
+
+            this.x = x;
+            this.y = y;
+
+            sprite.TextureRect = new IntRect(0, 0, 16, 16);
         }
 
+
+        //Основыне методы
         public virtual void update(float time, int[,] tileMap, ref RenderWindow a, ref FieldMap h, Player1 ob1, Player2 ob2)
         {
-
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Up))
-            {
-                dir = 3;
-                speed = 0.07f;
-                sprite.TextureRect = new IntRect(0, 0, 32, 32);
-            }
-
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Down))
-            {
-                dir = 2;
-                speed = 0.1f;
-                sprite.TextureRect = new IntRect(32, 0, 32, 32);
-            }
-
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Right))
-            {
-                dir = 0;
-                speed = 0.1f;
-
-                sprite.TextureRect = new IntRect(96, 0, 32, 32);
-            }
-
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Left))
-            {
-                dir = 1;
-                speed = 0.07f;
-
-                sprite.TextureRect = new IntRect(64, 0, 32, 32);
-            }
+            Control();
 
             switch (dir)
             {
-                case 0:
-                    dx = speed;
+                case (int)state.right:
+                    dx = currentSpeed;
                     dy = 0;
                     break;
-                case 1:
-                    dx = -speed;
+                case (int)state.left:
+                    dx = -currentSpeed;
                     dy = 0;
                     break;
-                case 2:
+                case (int)state.down:
                     dx = 0;
-                    dy = speed;
+                    dy = currentSpeed;
                     break;
-                case 3:
+                case (int)state.up:
                     dx = 0;
-                    dy = -speed;
+                    dy = -currentSpeed;
                     break;
                 default:
                     break;
@@ -111,16 +111,15 @@ namespace BattleCity
 
             x += dx * time;
             y += dy * time;
+            currentSpeed = 0;
 
-            speed = 0;
 
-
-            MultiplePos();
-
+            //Тестируемый блок
+            СorrectionPosition();
 
             sprite.Position = new Vector2f (x,y);
 
-            if(CollisiumWihtPlayer(ob1, ob2))
+            if(PlayersCollisium(ob1, ob2))
             {
                 if(dir == 1)
                     sprite.Position = new Vector2f(x += 2, y);
@@ -131,13 +130,12 @@ namespace BattleCity
                     sprite.Position = new Vector2f(x , y += 2);
                 else if (dir == 2)
                     sprite.Position = new Vector2f(x , y -= 2);
-
             }
 
-            //interactionWithMap(tileMap, ref a, ref h);
+            interactionWithMap(tileMap, ref a);
         }
 
-        public virtual void interactionWithMap(int[,] tileMap, ref RenderWindow window, ref FieldMap map)
+        public virtual void interactionWithMap(int[,] tileMap, ref RenderWindow window)
         {
             for (int i = (int)y / 32; i < (y + height) / 32; i++)
                 for (int j = (int)x / 32; j < (x + width) / 32; j++)
@@ -167,24 +165,24 @@ namespace BattleCity
                     }
 
                     if (tileMap[i, j] == 0)
-                    {
                         sprite.Color = new Color(0, 255, 0);
-                    }
 
                     if (tileMap[i, j] == 2)
-                    {
                         sprite.Color = new Color(0, 255, 0, 5);
-
-                        //sprite.Position = new Vector2f(x, y);
-                        //map.Draw(ref window);
-                        //window.Display();
-
-                        //window.Draw(sprite);
-                    }
                 }
         }
 
-        public void MultiplePos()
+        public bool PlayersCollisium(Player1 ob1, Player2 ob2)
+        {
+            if ((ob1.X >= ob2.X - 30 && ob1.X <= ob2.X + 30) && (ob1.Y >= ob2.Y - 30 && ob1.Y <= ob2.Y + 30))
+                return true;
+            else if ((ob2.X >= ob1.X + 30 && ob2.X <= ob1.X - 30) && ((ob2.Y >= ob1.Y - 30 && ob2.Y <= ob1.Y + 30)))
+                return true;
+
+            return false;
+        }
+
+        protected void СorrectionPosition()
         {
             int tmp = 2;
 
@@ -194,8 +192,7 @@ namespace BattleCity
             x = tmpX;
             y = tmpY;
 
-
-            if (dir == 1)
+            if (dir == (int)state.left)
             {
                 var result = y % tmp;
                 if (result < 0)
@@ -204,7 +201,7 @@ namespace BattleCity
                 y += result;
             }
 
-            if (dir == 0)
+            if (dir == (int)state.right)
             {
                 var result = y % tmp;
                 if (result < 0)
@@ -213,7 +210,7 @@ namespace BattleCity
                 y -= result;
             }
 
-            if (dir == 2)
+            if (dir == (int)state.down)
             {
                 var result = x % tmp;
                 if (result < 0)
@@ -222,7 +219,7 @@ namespace BattleCity
                 x += result;
             }
 
-            if (dir == 3)
+            if (dir == (int)state.up)
             {
                 var result = x % tmp;
                 if (result < 0)
@@ -232,23 +229,48 @@ namespace BattleCity
             }
         }
 
-        public Sprite Sprite
+        public virtual void Control()
         {
-            get { return sprite; }
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Up))
+            {
+                dir = (int)state.up;
+                currentSpeed = speedBackward;
+                sprite.TextureRect = new IntRect(0, 0, 32, 32);
+            }
 
-            protected set { }
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Down))
+            {
+                dir = (int)state.down;
+                currentSpeed = speedForward;
+                sprite.TextureRect = new IntRect(32, 0, 32, 32);
+            }
+
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Right))
+            {
+                dir = (int)state.right;
+                currentSpeed = speedForward;
+                sprite.TextureRect = new IntRect(96, 0, 32, 32);
+            }
+
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Left))
+            {
+                dir = (int)state.left;
+                currentSpeed = speedBackward;
+                sprite.TextureRect = new IntRect(64, 0, 32, 32);
+            }
+
+            if (Keyboard.IsKeyPressed(Keyboard.Key.LControl))
+            {
+                if (isShoot == false)
+                {
+                    bullet = new Bullet("bullet.png", Color.Green,x,y,0.1F,dir);
+                    isShoot = true;
+                }
+            }
         }
 
-        public bool CollisiumWihtPlayer(Player1 ob1, Player2 ob2)
-        {
-            if ((ob1.X >= ob2.X - 30 && ob1.X <= ob2.X + 30) && (ob1.Y >= ob2.Y - 30 && ob1.Y <= ob2.Y + 30))//) //|| /*((ob1.Y + 30 >= ob2.Y && ob1.Y <= ob2.Y + 30) && (ob1.Y - 30 <= ob2.Y && ob1.Y <= ob2.Y + 30*/)
-                return true;
-            else if (ob2.X >= ob1.X - 30 && ob2.X <= ob1.X + 30)
-                return true;
 
-            return false;
-        }
-
+        //Свойства
         public int X
         {
             get { return (int)x; }
@@ -261,6 +283,11 @@ namespace BattleCity
             get { return (int)y; }
 
             protected set { y = value; }
+        }
+
+        public Sprite Sprite
+        {
+            get { return sprite; }
         }
     }
 
@@ -283,7 +310,7 @@ namespace BattleCity
 
             sprite.Color = color;
         }
-            
+
     }
 
     class Player2 : Unit
@@ -306,56 +333,59 @@ namespace BattleCity
 
         }
 
-        public override void update(float time, int[,] tileMap, ref RenderWindow a, ref FieldMap h, Player1 ob1, Player2 ob2)
+        public override void Control()
         {
             if (Keyboard.IsKeyPressed(Keyboard.Key.W))
             {
-                dir = 3;
-                speed = 0.07f;
+                dir = (int)state.up;
+                currentSpeed = speedBackward;
                 sprite.TextureRect = new IntRect(0, 0, 32, 32);
             }
 
             if (Keyboard.IsKeyPressed(Keyboard.Key.S))
             {
-                dir = 2;
-                speed = 0.1f;
+                dir = (int)state.down;
+                currentSpeed = speedForward;
                 sprite.TextureRect = new IntRect(32, 0, 32, 32);
             }
 
             if (Keyboard.IsKeyPressed(Keyboard.Key.D))
             {
-                dir = 0;
-                speed = 0.1f;
-
+                dir = (int)state.right;
+                currentSpeed = speedForward;
                 sprite.TextureRect = new IntRect(96, 0, 32, 32);
             }
 
             if (Keyboard.IsKeyPressed(Keyboard.Key.A))
             {
-                dir = 1;
-                speed = 0.07f;
-
+                dir = (int)state.left;
+                currentSpeed = speedBackward;
                 sprite.TextureRect = new IntRect(64, 0, 32, 32);
             }
+        }
+
+        public override void update(float time, int[,] tileMap, ref RenderWindow a, ref FieldMap h, Player1 ob1, Player2 ob2)
+        {
+            Control();
 
             switch (dir)
             {
                 case 0:
-                    dx = speed;
+                    dx = currentSpeed;
                     dy = 0;
                     break;
                 case 1:
-                    dx = -speed;
+                    dx = -currentSpeed;
                     dy = 0;
 
                     break;
                 case 2:
                     dx = 0;
-                    dy = speed;
+                    dy = currentSpeed;
                     break;
                 case 3:
                     dx = 0;
-                    dy = -speed;
+                    dy = -currentSpeed;
                     break;
                 default:
                     break;
@@ -364,17 +394,30 @@ namespace BattleCity
             x += dx * time;
             y += dy * time;
 
-            speed = 0;
+            currentSpeed = 0;
 
 
-            MultiplePos();
-
+            СorrectionPosition();
 
             sprite.Position = new Vector2f(x, y);
-            interactionWithMap(tileMap, ref a, ref h);
+
+            if (PlayersCollisium(ob1, ob2))
+            {
+                if (dir == 1)
+                    sprite.Position = new Vector2f(x += 2, y);
+                else if (dir == 0)
+                    sprite.Position = new Vector2f(x -= 2, y);
+
+                if (dir == 3)
+                    sprite.Position = new Vector2f(x, y += 2);
+                else if (dir == 2)
+                    sprite.Position = new Vector2f(x, y -= 2);
+            }
+
+            interactionWithMap(tileMap, ref a);
         }
 
-        public override void interactionWithMap(int[,] tileMap, ref RenderWindow window, ref FieldMap map)
+        public override void interactionWithMap(int[,] tileMap, ref RenderWindow windowp)
         {
             for (int i = (int)y / 32; i < (y + height) / 32; i++)
                 for (int j = (int)x / 32; j < (x + width) / 32; j++)
@@ -424,7 +467,7 @@ namespace BattleCity
 
 
 
-
+    //Ждите обновлений :))
     class Enemy : Unit
     {
         public Enemy(string fileName, string enemyName, int dificult, Color color, float x, float y) : base(fileName, x, y)
